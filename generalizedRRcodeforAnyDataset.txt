@@ -1,0 +1,130 @@
+"""
+Semantic Resume/Document Screening (General Version)
+----------------------------------------------------
+USAGE:
+1. Place your dataset as a CSV file (e.g., 'your_dataset.csv') in the same directory.
+2. Edit the COLUMN_MAP below to match your dataset's column names.
+3. Run this script.
+4. When prompted, paste your job description or requirements.
+5. The script outputs:
+   - A CSV report with semantic match scores
+   - Top N matching documents as .txt files
+   - A table of all candidates (in notebook environments)
+   - A bar plot of the top N matches
+
+REQUIREMENTS:
+- pandas
+- numpy
+- matplotlib
+- sentence-transformers
+
+Install requirements:
+    pip install pandas numpy matplotlib sentence-transformers
+
+"""
+
+import pandas as pd
+import string
+import os
+from sentence_transformers import SentenceTransformer
+from numpy import dot
+from numpy.linalg import norm
+import matplotlib.pyplot as plt
+
+# --- USER SETTINGS ---
+
+DATA_PATH = "your_dataset.csv"  # <-- Update this to your dataset filename
+OUTPUT_CSV = "semantic_screening_report.csv"
+TOP_N = 5  # Number of top matches to export
+
+# Map these to your CSV columns (edit as needed)
+COLUMN_MAP = {
+    'id': 'Resume_ID',       # unique identifier or resume text
+    'name': 'Name',          # candidate name
+    'text': 'Resume_Text',   # resume/document text for matching
+    # Optionally include: 'skills': 'Skills',
+}
+
+# --- SCRIPT STARTS HERE ---
+
+# 1. Load Data
+data = pd.read_csv(DATA_PATH)
+for col in COLUMN_MAP.values():
+    if col not in data.columns:
+        data[col] = "N/A"
+print(f"✅ Dataset loaded. Rows: {len(data)}")
+
+# 2. Clean Text
+def clean_text(text):
+    text = str(text).lower()
+    text = text.translate(str.maketrans('', '', string.punctuation))
+    return ' '.join(text.split())
+data['Cleaned_Text'] = data[COLUMN_MAP['text']].apply(clean_text)
+
+# 3. Job Description Input
+print("\nPaste your job description or requirements and press Enter (end with Ctrl+D in terminal or just Enter in notebook):")
+job_description = ""
+try:
+    while True:
+        line = input()
+        job_description += line + " "
+except EOFError:
+    pass
+if not job_description.strip():
+    job_description = "data science python machine learning statistics" # fallback example
+cleaned_jd = clean_text(job_description)
+jd_keywords = set(cleaned_jd.split())
+
+# 4. Semantic Screening
+model = SentenceTransformer('all-MiniLM-L6-v2')
+doc_embeddings = model.encode(data['Cleaned_Text'].tolist(), convert_to_tensor=False)
+jd_embedding = model.encode([cleaned_jd], convert_to_tensor=False)
+def cos_sim(a, b):
+    return dot(a, b) / (norm(a) * norm(b))
+data['Match_Score'] = [cos_sim(doc_emb, jd_embedding[0]) for doc_emb in doc_embeddings]
+
+# 5. Skill Matching (if skills present)
+if 'skills' in COLUMN_MAP:
+    def matched_skills(text):
+        return ', '.join(sorted(set(text.split()) & jd_keywords))
+    data['Matched_Skills'] = data['Cleaned_Text'].apply(matched_skills)
+    data['Skill_Match_Count'] = data['Matched_Skills'].apply(lambda x: 0 if not x else len(x.split(', ')))
+else:
+    data['Matched_Skills'] = ""
+    data['Skill_Match_Count'] = 0
+
+# 6. Ranking and Export
+ranked = data.sort_values(by='Match_Score', ascending=False).reset_index(drop=True)
+ranked['Rank'] = ranked.index + 1
+
+display_cols = [COLUMN_MAP['id'], COLUMN_MAP['name'], 'Match_Score', 'Skill_Match_Count', 'Matched_Skills', 'Rank']
+if COLUMN_MAP['text'] not in display_cols:
+    display_cols.insert(2, COLUMN_MAP['text'])
+ranked[display_cols].to_csv(OUTPUT_CSV, index=False)
+print(f"\n📁 Report saved to '{OUTPUT_CSV}'.")
+
+# 7. Export Top N Documents as TXT
+os.makedirs("Top_Documents", exist_ok=True)
+for i in range(min(TOP_N, len(ranked))):
+    with open(f"Top_Documents/Rank_{i+1}_Document.txt", 'w', encoding='utf-8') as f:
+        f.write(str(ranked.loc[i, COLUMN_MAP['text']]))
+print(f"📂 Top {TOP_N} documents exported to 'Top_Documents/' folder.")
+
+# 8. Display Table in Notebook (if available)
+try:
+    from IPython.display import display
+    print("\n📝 Full Candidates Table (All Rows):")
+    display(ranked[display_cols])
+except ImportError:
+    print("\n📝 Full Candidates Table (All Rows):")
+    print(ranked[display_cols].to_string(index=False))
+
+# 9. Visualization
+plt.figure(figsize=(8, 4))
+plt.barh(range(1, TOP_N+1), ranked['Match_Score'][:TOP_N], color='skyblue')
+plt.yticks(range(1, TOP_N+1), [f"Rank {i+1}: {ranked.loc[i, COLUMN_MAP['name']]}" for i in range(TOP_N)])
+plt.xlabel("Match Score")
+plt.title(f"Top {TOP_N} Document Match Scores (Semantic)")
+plt.gca().invert_yaxis()
+plt.tight_layout()
+plt.show()
