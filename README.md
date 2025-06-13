@@ -1,112 +1,21 @@
 # Ml_projects_resume_detect
 Projects: AI-Powered Resume Ranker &amp;&amp; Credit Card Fraud Detection
-# Semantic Resume Screening Project
 
-## Introduction
+This combined AI/ML project report showcases two highly relevant and practical applications of machine learning:
+1)AI-Powered Resume Ranker – a natural language processing (NLP) tool to screen and rank candidate resumes based on job descriptions.
+2)Credit Card Fraud Detection – a real-world classification system that detects fraudulent transactions using structured financial data.
+Both projects are built using foundational ML tools, enhanced with intelligent logic, and written for clarity, usability, and real-world impact.
 
-This project implements an automated resume screening system using semantic similarity models. The goal is to efficiently match candidate resumes to a job description, ranking them by relevance for data-driven and fair shortlisting.
 
-## Objectives
+1) AI-Powered Resume Ranker is a practical machine learning project aimed at streamlining the recruitment process by automatically evaluating and ranking resumes based on their relevance to a given job description. In real-world hiring scenarios, recruiters often face the challenge of reviewing hundreds of resumes manually, which is not only time-consuming but also prone to inconsistency and human bias. This system addresses that problem using fundamental NLP techniques such as TF-IDF vectorization and cosine similarity to compare the textual content of resumes with a job description. Each resume is assigned a match score that reflects how closely it aligns with the job requirements. The model further enhances interpretability by identifying which skills or keywords from the job description are present in each resume, helping recruiters make informed decisions. Its simplicity, transparency, and effectiveness make it a valuable tool for startups, HR teams, and applicant tracking systems looking to optimize their candidate screening process. Looking ahead, this project has several promising directions for growth, including integrating semantic understanding with models like BERT, section-wise resume analysis, and building a user-friendly web interface for real-time use. Ultimately, this project demonstrates how well-designed, lightweight AI tools can be applied to solve real hiring challenges with both efficiency and fairness.
 
-- Automatically screen and rank resumes based on semantic similarity to a job description.
-- Extract and display skill matches for transparency.
-- Export top candidates and provide a visual summary of scores.
 
-## Dataset
+2) The Credit Card Fraud Detection project is a machine learning-based solution designed to detect fraudulent financial transactions from real-world credit card data. In today’s digital economy, fraud detection has become a mission-critical application for banks and payment platforms, where even small lapses can lead to major financial losses. This project uses the widely referenced Kaggle dataset, which contains anonymized transaction data and includes a highly imbalanced target label—only a tiny fraction of the transactions are fraudulent. To address this challenge, the project implements key strategies such as using the RandomForestClassifier with class weighting and applying SMOTE (Synthetic Minority Oversampling Technique) to balance the training data. This ensures the model can learn to detect fraudulent patterns effectively without being overwhelmed by the dominant class. After training, the model is evaluated using precision, recall, F1-score, and the ROC-AUC metric, which are more meaningful than accuracy for imbalanced data. The confusion matrix and feature importance visualizations further aid in understanding model behavior and interpretability. In practical terms, this project simulates how a real-time fraud detection system could operate in banks, fintech platforms, or e-commerce environments. Future improvements could include integrating time-based anomaly detection, live transaction scoring using APIs, or deploying the model into a streaming architecture. Overall, the project balances clarity, performance, and real-world applicability, making it an ideal candidate for production use and an excellent demonstration of applied machine learning in cybersecurity and finance.
 
-- **Source:** `/kaggle/input/prodataset/AI_Resume_Screening.csv`
-- **Fields Used:** 
-  - `Resume_ID` (or resume text)
-  - `Name` (candidate’s name)
-  - Other fields as present in your dataset.
 
-## Methodology
-
-### 1. Data Loading & Cleaning
-
-- The resumes are loaded from a CSV file.
-- Each resume is cleaned by converting to lowercase and removing punctuation for uniformity.
-
-### 2. Job Description Processing
-
-- The job description is defined by the user and cleaned similarly.
-- Key skills are extracted for additional skill matching analysis.
-
-### 3. Semantic Similarity Calculation
-
-- We use a pre-trained BERT-based Sentence Transformer model (`all-MiniLM-L6-v2`).
-- Both resumes and job description are encoded into semantic vectors.
-- Cosine similarity is used to score each resume against the job description.
-- **Advantage:** Scores are almost never exactly zero, even with no keyword overlap, as the model captures semantic meaning.
-
-### 4. Skill Extraction
-
-- For each resume, the intersection of words with job description keywords is computed.
-- The matched skills and their count are recorded for each candidate.
-
-### 5. Ranking & Export
-
-- Resumes are ranked by their semantic similarity score.
-- An enhanced CSV report is generated including candidate name, resume ID, score, and matched skills.
-- The top 5 resumes are exported as text files for easy review.
-
-### 6. Visualization
-
-- A bar chart visualizes the match scores of the top 5 candidates.
-
-## Results
-
-- The system outputs a ranked list of candidates with their names, IDs, scores, and skill matches.
-- Top resumes are saved for direct inspection.
-- The approach ensures fair, semantic-based matching, reducing bias from simple keyword overlap.
-
-## Key Code Snippet
-
-```python
-from sentence_transformers import SentenceTransformer
-from numpy import dot
-from numpy.linalg import norm
-
-def cos_sim(a, b):
-    return dot(a, b) / (norm(a) * norm(b))
-
-model = SentenceTransformer('all-MiniLM-L6-v2')
-resume_embeddings = model.encode(data['Cleaned_Resume'].tolist(), convert_to_tensor=False)
-jd_embedding = model.encode([cleaned_jd], convert_to_tensor=False)
-data['Match_Score'] = [cos_sim(res_emb, jd_embedding[0]) for res_emb in resume_embeddings]
-```
-
-## Files Produced
-
-- `enhanced_resume_match_report.csv` — Full ranked report with names, scores, and skill matches.
-- `Top_Resumes/` — Folder with the top 5 resumes as text files.
-- Bar chart visualizing top match scores.
-
-## How to Run
-
-1. Update the job description section of the code as needed.
-2. Place your resume dataset at the specified path.
-3. Run the script in a Python environment with required packages.
-4. Review the CSV report, exported top resumes, and the score visualization.
-
-## Requirements
-
-- Python 3.x
-- pandas
-- sentence-transformers
-- numpy
-- matplotlib
-
-Install requirements with:
-```bash
-pip install pandas sentence-transformers numpy matplotlib
-```
-
-## Conclusion
-
-This project demonstrates an effective, modern approach to resume screening using semantic matching. It enables HR professionals to shortlist candidates based on the true meaning of their experience, not just keywords.
-
----
+## For project 2 Credit Card Fraud Detection 
+This project uses the [Credit Card Fraud Detection dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) from Kaggle.
+Due to GitHub file size limits, the dataset is not included in this repository. Please download it directly from Kaggle to run the code.
 
 *Prepared by: [Gaurav Maheshwari]*  
 *Date: June 2025*
